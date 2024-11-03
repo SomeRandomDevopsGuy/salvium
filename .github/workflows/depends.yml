@@ -19,7 +19,6 @@ env:
         ccache --max-size=150M
         ccache --set-config=compression=true
   USE_DEVICE_TREZOR_MANDATORY: ON
-  USE_SINGLE_BUILDDIR: 1
 jobs:
   build-cross:
     runs-on: ubuntu-20.04
@@ -113,7 +112,7 @@ jobs:
     - name: build
       run: |
         ${{env.CCACHE_SETTINGS}}
-        make depends target=${{ matrix.toolchain.host }} -j2
+        USE_SINGLE_BUILDDIR=1 make depends target=${{ matrix.toolchain.host }} -j2
     - uses: actions/upload-artifact@v4
       if: ${{ matrix.toolchain.host == 'x86_64-w64-mingw32' || matrix.toolchain.host == 'x86_64-apple-darwin' || matrix.toolchain.host == 'aarch64-apple-darwin' || matrix.toolchain.host == 'x86_64-unknown-linux-gnu' }}
       with:
