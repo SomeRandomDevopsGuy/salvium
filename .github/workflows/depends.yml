@@ -30,33 +30,43 @@ jobs:
       matrix:
         toolchain:
           - name: "RISCV 64bit"
+            zipname: "risc-64"
             host: "riscv64-linux-gnu"
             packages: "python3 gperf g++-riscv64-linux-gnu"
           - name: "ARM v7"
+            zipname: "linux-arm-7"
             host: "arm-linux-gnueabihf"
             packages: "python3 gperf g++-arm-linux-gnueabihf"
           - name: "ARM v8"
+            zipname: "linux-arm-64"
             host: "aarch64-linux-gnu"
             packages: "python3 gperf g++-aarch64-linux-gnu"
           - name: "i686 Win"
+            zipname: "win-i686"
             host: "i686-w64-mingw32"
             packages: "python3 g++-mingw-w64-i686"
           - name: "i686 Linux"
+            zipname: "linux-i686"
             host: "i686-pc-linux-gnu"
             packages: "gperf cmake g++-multilib python3-zmq"
           - name: "Win64"
+            zipname: "linux-64"
             host: "x86_64-w64-mingw32"
             packages: "cmake python3 g++-mingw-w64-x86-64"
           - name: "x86_64 Linux"
+            zipname: "linux-x86-64"
             host: "x86_64-unknown-linux-gnu"
             packages: "gperf cmake python3-zmq libdbus-1-dev libharfbuzz-dev"
           - name: "Cross-Mac x86_64"
+            zipname: "mac-x86-64"
             host: "x86_64-apple-darwin"
             packages: "cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev python3-setuptools-git"
           - name: "Cross-Mac aarch64"
+            zipname: "mac-arm-64"
             host: "aarch64-apple-darwin"
             packages: "cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev python3-setuptools-git"
           - name: "x86_64 Freebsd"
+            zipname: "freebsd-x86_64"
             host: "x86_64-unknown-freebsd"
             packages: "clang-8 gperf cmake python3-zmq libdbus-1-dev libharfbuzz-dev"
               #          - name: "ARMv8 Android"
@@ -113,15 +123,19 @@ jobs:
           /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salviumd*
     - name: zip daemon & cli
       run: |
-        zip salvium-${GITHUB_REF_NAME}-${{ matrix.toolchain.host }}.zip /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salvium-wallet-rpc* /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salvium-wallet-cli* /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salviumd*
-        ls -l
+        zip -j salvium-${GITHUB_REF_NAME}-${{ matrix.toolchain.zipname }}.zip /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salvium-wallet-rpc* /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salvium-wallet-cli* /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salviumd*
     - name: "Deploy"
       uses: keithweaver/aws-s3-github-action@v1.0.0
       with:
         command: cp
-        source: ./salvium-${{ github.ref_name }}-${{ matrix.toolchain.host }}.zip
-        destination: s3://${{ vars.S3_BUCKET }}/salvium-${{ github.ref_name }}-${{ matrix.toolchain.host }}.zip
+        source: ./salvium-${{ github.ref_name }}-${{ matrix.toolchain.zipname }}.zip
+        destination: s3://${{ vars.S3_BUCKET }}/salvium-${{ github.ref_name }}-${{ matrix.toolchain.zipname }}.zip
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: eu-west-1
         flags: --acl public-read
+    - name: "Make Release"
+      uses: softprops/action-gh-release@v2
+      #if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ./salvium-${{ github.ref_name }}-${{ matrix.toolchain.zipname }}.zip
