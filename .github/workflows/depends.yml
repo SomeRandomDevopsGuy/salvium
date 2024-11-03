@@ -19,7 +19,7 @@ env:
         ccache --max-size=150M
         ccache --set-config=compression=true
   USE_DEVICE_TREZOR_MANDATORY: ON
-
+  USE_SINGLE_BUILDDIR: 1
 jobs:
   build-cross:
     runs-on: ubuntu-20.04
@@ -119,11 +119,11 @@ jobs:
       with:
         name: ${{ matrix.toolchain.name }}
         path: |
-          /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salvium-wallet-cli*
-          /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salviumd*
+          /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/release/bin/salvium-wallet-cli*
+          /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/release/bin/salviumd*
     - name: zip daemon & cli
       run: |
-        zip -j salvium-${GITHUB_REF_NAME}-${{ matrix.toolchain.zipname }}.zip /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salvium-wallet-rpc* /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salvium-wallet-cli* /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/${{ matrix.toolchain.host }}/release/bin/salviumd*
+        zip -j salvium-${GITHUB_REF_NAME}-${{ matrix.toolchain.zipname }}.zip /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/release/bin/salvium-wallet-rpc* /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/release/bin/salvium-wallet-cli* /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/build/release/bin/salviumd*
     - name: "Deploy"
       uses: keithweaver/aws-s3-github-action@v1.0.0
       with:
@@ -136,6 +136,6 @@ jobs:
         flags: --acl public-read
     - name: "Make Release"
       uses: softprops/action-gh-release@v2
-      #if: startsWith(github.ref, 'refs/tags/')
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: ./salvium-${{ github.ref_name }}-${{ matrix.toolchain.zipname }}.zip
